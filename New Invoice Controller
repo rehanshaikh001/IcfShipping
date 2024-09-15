@@ -1,0 +1,370 @@
+using System;
+using System.IO;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting; // Required for IWebHostEnvironment
+
+namespace YourNamespace.Controllers
+{
+    public class InvoiceController : Controller
+    {
+        private readonly IWebHostEnvironment _webHostEnvironment;
+
+        // Constructor to inject IWebHostEnvironment
+        public InvoiceController(IWebHostEnvironment webHostEnvironment)
+        {
+            _webHostEnvironment = webHostEnvironment;
+        }
+
+        // GET: Invoice
+        public ActionResult InvoiceView()
+        {
+            return View();
+        }
+
+        // Action to generate and download PDF
+        public ActionResult DownloadInvoice()
+        {
+            // Create a new PDF document
+            using (MemoryStream ms = new MemoryStream())
+            {
+                // Create a new PDF document
+                Document document = new Document(PageSize.A4, 36, 36, 60, 50); // Adjust margins
+                PdfWriter writer = PdfWriter.GetInstance(document, ms);
+
+                // Construct the path to the logo image in wwwroot
+                string logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "dist", "logo", "logo.png");
+
+                // Attach custom page event handler for header and footer
+                PdfGenerator eventHandler = new PdfGenerator("Company Name", "Your Trusted Logistics Partner", "Logistics Bill Invoice", logoPath);
+                writer.PageEvent = eventHandler;
+
+                document.Open();
+
+                // Create a table with 10 main columns
+                PdfPTable table = new PdfPTable(10);
+                table.WidthPercentage = 100;
+
+                // Define column widths (proportions between columns)
+                float[] columnWidths = { 5f, 20f, 10f, 5f, 5f, 10f, 10f, 15f, 15f, 10f };
+                table.SetWidths(columnWidths);
+
+                // Add the first row (main headers)
+                table.AddCell(new PdfPCell(new Phrase("SrNo", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(new Phrase("Description", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(new Phrase("SAC", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(new Phrase("Qty", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(new Phrase("Curr", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(new Phrase("Rate", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(new Phrase("Amount", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+
+                // Creating SGST header cell with nested table for Rate and Amount
+                PdfPTable sgstSubTable = new PdfPTable(2);
+                sgstSubTable.AddCell(new PdfPCell(new Phrase("Rate", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.LIGHT_GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                sgstSubTable.AddCell(new PdfPCell(new Phrase("Amt", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.LIGHT_GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(sgstSubTable)
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+
+                // Creating CGST header cell with nested table for Rate and Amount
+                PdfPTable cgstSubTable = new PdfPTable(2);
+                cgstSubTable.AddCell(new PdfPCell(new Phrase("Rate", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.LIGHT_GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                cgstSubTable.AddCell(new PdfPCell(new Phrase("Amt", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.LIGHT_GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+                table.AddCell(new PdfPCell(cgstSubTable)
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+
+                // Add "Total Amount" header
+                table.AddCell(new PdfPCell(new Phrase("Total Amount", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                {
+                    BackgroundColor = BaseColor.GRAY,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                    Padding = 5
+                });
+
+                // Example: Adding dummy data rows (you can replace this with actual data)
+                for (int i = 1; i <= 5; i++)
+                {
+                    table.AddCell(new PdfPCell(new Phrase(i.ToString())));
+                    table.AddCell(new PdfPCell(new Phrase($"Description {i}")));
+                    table.AddCell(new PdfPCell(new Phrase($"SAC {i}")));
+                    table.AddCell(new PdfPCell(new Phrase($"{i * 2}")));
+                    table.AddCell(new PdfPCell(new Phrase("INR")));
+                    table.AddCell(new PdfPCell(new Phrase($"{i * 100}")));
+                    table.AddCell(new PdfPCell(new Phrase($"{i * 200}")));
+
+                    // Nested SGST data (Rate and Amount)
+                    PdfPTable sgstDataSubTable = new PdfPTable(2);
+                    sgstDataSubTable.AddCell(new PdfPCell(new Phrase($"{i * 9}%")));
+                    sgstDataSubTable.AddCell(new PdfPCell(new Phrase($"{i * 18}")));
+                    table.AddCell(new PdfPCell(sgstDataSubTable));
+
+                    // Nested CGST data (Rate and Amount)
+                    PdfPTable cgstDataSubTable = new PdfPTable(2);
+                    cgstDataSubTable.AddCell(new PdfPCell(new Phrase($"{i * 9}%")));
+                    cgstDataSubTable.AddCell(new PdfPCell(new Phrase($"{i * 18}")));
+                    table.AddCell(new PdfPCell(cgstDataSubTable));
+
+                    table.AddCell(new PdfPCell(new Phrase($"{i * 400}")));
+                }
+                document.Add(table);
+                //// Create a table with 12 columns
+                //PdfPTable table = new PdfPTable(12)
+                //{
+                //    WidthPercentage = 100,
+                //    HeaderRows = 1 // Set first row as header
+                //};
+
+                //// Add table headers
+                ////for (int i = 0; i < 12; i++)
+                ////{
+                ////    PdfPCell headerCell = new PdfPCell(new Phrase($"Header {i + 1}", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.WHITE)))
+                ////    {
+                ////        BackgroundColor = BaseColor.GRAY,
+                ////        HorizontalAlignment = Element.ALIGN_CENTER,
+                ////        Padding = 5
+                ////    };
+                ////    table.AddCell(headerCell);
+                ////}
+                //    PdfPCell headerCell1 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell2 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell3 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell4 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell5 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell6 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell7 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell8 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell9 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell01 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell02 = new PdfPCell(new Phrase("Header"));
+                //    PdfPCell headerCell03 = new PdfPCell(new Phrase("Header"));
+
+                //   table.AddCell(headerCell1);
+                //   table.AddCell(headerCell2);
+                //   table.AddCell(headerCell3);
+                //   table.AddCell(headerCell4);
+                //   table.AddCell(headerCell5);
+                //   table.AddCell(headerCell6);
+                //   table.AddCell(headerCell7);
+                //   table.AddCell(headerCell8);
+                //   table.AddCell(headerCell9);
+                //   table.AddCell(headerCell01);
+                //   table.AddCell(headerCell02);
+                //   table.AddCell(headerCell03);
+
+                //// Add table data rows (example with 100 rows)
+                //for (int i = 0; i < 50; i++)
+                //{
+                //    for (int j = 0; j < 12; j++)
+                //    {
+                //        PdfPCell cell = new PdfPCell(new Phrase($"Data {i + 1}-{j + 1}", new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, BaseColor.BLACK)))
+                //        {
+                //            Padding = 5
+                //        };
+                //        table.AddCell(cell);
+                //    }
+                //}
+                //document.Add(table); // Add table to the document
+
+                // Close the document
+                document.Close();
+
+                // Set the content type and headers for the response
+                byte[] fileBytes = ms.ToArray();
+                return File(fileBytes, "application/pdf", "Invoice.pdf");
+            }
+        }
+
+        public class PdfGenerator : PdfPageEventHelper
+        {
+            private string _headerTitle;
+            private string _headerSlogan;
+            private string _headerMainHeading;
+            private Image _companyLogo;
+
+            // Constructor to initialize header details and load the logo
+            public PdfGenerator(string headerTitle, string headerSlogan, string headerMainHeading, string logoPath)
+            {
+                _headerTitle = headerTitle;
+                _headerSlogan = headerSlogan;
+                _headerMainHeading = headerMainHeading;
+
+                // Load the company logo with error handling
+                try
+                {
+                    if (System.IO.File.Exists(logoPath))
+                    {
+                        _companyLogo = Image.GetInstance(logoPath);
+                        _companyLogo.ScaleToFit(50f, 50f); // Scale logo to standard size
+                    }
+                    else
+                    {
+                        _companyLogo = null; // Handle the missing logo case
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading logo image: {ex.Message}");
+                    _companyLogo = null;
+                }
+            }
+
+            // OnStartPage event for adding header
+            public override void OnStartPage(PdfWriter writer, Document document)
+            {
+                AddHeader(writer, document);
+            }
+
+            // OnEndPage event for adding footer
+            public override void OnEndPage(PdfWriter writer, Document document)
+            {
+                AddFooter(writer, document);
+            }
+
+            // Method to add header content
+            private void AddHeader(PdfWriter writer, Document document)
+            {
+                PdfPTable headerTable = new PdfPTable(2)
+                {
+                    TotalWidth = document.PageSize.Width - document.LeftMargin - document.RightMargin,
+                    HorizontalAlignment = Element.ALIGN_CENTER
+                };
+
+                // Add logo cell
+                // Create a cell for the logo; if the logo is not available, create a placeholder text cell instead
+                PdfPCell logoCell;
+
+                if (_companyLogo != null)
+                {
+                    // If the logo is available, use the logo image
+                    logoCell = new PdfPCell(_companyLogo)
+                    {
+                        Border = Rectangle.NO_BORDER,
+                        VerticalAlignment = Element.ALIGN_MIDDLE,
+                        Padding = 5
+                    };
+                }
+                else
+                {
+                    // If the logo is missing, display "Logo Missing" as placeholder text
+                    logoCell = new PdfPCell(new Phrase("Logo Missing", new Font(Font.FontFamily.HELVETICA, 10, Font.ITALIC, BaseColor.RED)))
+                    {
+                        Border = Rectangle.NO_BORDER,
+                        VerticalAlignment = Element.ALIGN_MIDDLE,
+                        Padding = 5,
+                        HorizontalAlignment = Element.ALIGN_CENTER // Optional: Center-align the text if you prefer
+                    };
+                }
+
+                // Add text cell with header information
+                PdfPCell textCell = new PdfPCell
+                {
+                    Border = Rectangle.NO_BORDER,
+                    Padding = 5
+                };
+
+                // Creating the header text
+                Paragraph headerText = new Paragraph
+                {
+                    new Chunk(_headerTitle, new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD, BaseColor.BLACK)),
+                    new Chunk("\n" + _headerSlogan, new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.GRAY)),
+                    new Chunk("\n" + _headerMainHeading, new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.BLACK))
+                };
+
+                textCell.AddElement(headerText);
+
+                headerTable.AddCell(logoCell);
+                headerTable.AddCell(textCell);
+
+                // Positioning header on the page
+                headerTable.WriteSelectedRows(0, -1, document.LeftMargin, document.PageSize.Height - 10, writer.DirectContent);
+            }
+
+            // Method to add footer content
+            private void AddFooter(PdfWriter writer, Document document)
+            {
+                PdfPTable footerTable = new PdfPTable(1)
+                {
+                    TotalWidth = document.PageSize.Width - document.LeftMargin - document.RightMargin,
+                    HorizontalAlignment = Element.ALIGN_CENTER
+                };
+
+                // Footer cell content
+                PdfPCell footerCell = new PdfPCell(new Phrase("Company Details | Client Information | Service | Business Details",
+                    new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.BLACK)))
+                {
+                    Border = Rectangle.TOP_BORDER,
+                    BorderWidthTop = 1,
+                    PaddingTop = 5,
+                    HorizontalAlignment = Element.ALIGN_CENTER
+                };
+
+                footerTable.AddCell(footerCell);
+                // Positioning footer on the page
+                footerTable.WriteSelectedRows(0, -1, document.LeftMargin, document.BottomMargin - 10, writer.DirectContent);
+            }
+        }
+    }
+}
