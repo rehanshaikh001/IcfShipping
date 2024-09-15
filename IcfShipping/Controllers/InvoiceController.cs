@@ -16,7 +16,7 @@ namespace IcfShipping.Controllers
         }
 
         // Action to generate and download PDF
-        public ActionResult DownloadInvoice()
+        public class PdfGenerator : PdfPageEventHelper
         {
             // Create a new PDF document
             using (MemoryStream ms = new MemoryStream())
