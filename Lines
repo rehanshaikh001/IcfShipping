@@ -1,0 +1,67 @@
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+
+public class PdfTableDesignExample
+{
+    public void CreatePdf(string path)
+    {
+        // Create a new document
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.GetInstance(document, new FileStream(path, FileMode.Create));
+
+        // Open the document
+        document.Open();
+
+        // Get PdfContentByte object from writer (used to draw lines)
+        PdfContentByte cb = writer.DirectContent;
+
+        // Set up positions for the table
+        float startX = 100f; // Left margin of the table
+        float startY = 750f; // Top position of the table
+        float cellHeight = 20f; // Height of each row
+        float tableWidth = 400f; // Total width of the table (width of all columns)
+        float[] columnWidths = { 50f, 100f, 100f, 150f }; // Individual column widths
+
+        // Draw horizontal lines (rows)
+        for (int i = 0; i <= 5; i++) // 5 rows
+        {
+            float y = startY - (i * cellHeight);
+            cb.MoveTo(startX, y); // Move to start of the row
+            cb.LineTo(startX + tableWidth, y); // Draw line to the end of the row
+            cb.Stroke(); // Complete the line
+        }
+
+        // Draw vertical lines (columns)
+        float x = startX;
+        foreach (float colWidth in columnWidths)
+        {
+            cb.MoveTo(x, startY); // Move to the top of the first column
+            cb.LineTo(x, startY - (5 * cellHeight)); // Draw line down through all rows
+            cb.Stroke();
+            x += colWidth; // Move to the next column
+        }
+
+        // Draw the last vertical line (for the right border)
+        cb.MoveTo(startX + tableWidth, startY);
+        cb.LineTo(startX + tableWidth, startY - (5 * cellHeight));
+        cb.Stroke();
+
+        // Adding text into the "table cells"
+        BaseFont bf = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+        cb.BeginText();
+        cb.SetFontAndSize(bf, 12);
+
+        // Example: Add text into the first cell of each row
+        for (int i = 0; i < 5; i++)
+        {
+            cb.SetTextMatrix(startX + 10, startY - (i * cellHeight) - 15); // Adjust position for text
+            cb.ShowText($"Row {i + 1} - Column 1");
+        }
+
+        // Close the text block
+        cb.EndText();
+
+        // Close the document
+        document.Close();
+    }
+}
